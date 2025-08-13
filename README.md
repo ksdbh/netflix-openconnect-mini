@@ -74,6 +74,5 @@ flowchart LR
 - In-memory store (simple & demo-friendly). Swap with a DB for persistence.
 - Scheduler randomizes CPU, throughput, and up/down state every 30s.
 - Add Grafana dashboard panels for the listed metrics.
-- Keep the README and commits clean — recruiters love clarity.
 ```
 
