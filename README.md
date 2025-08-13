@@ -1,3 +1,8 @@
+![Java](https://img.shields.io/badge/Java-17-blue)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen)
+![Prometheus](https://img.shields.io/badge/Monitoring-Prometheus-orange)
+![Grafana](https://img.shields.io/badge/Dashboard-Grafana-yellow)
+![License](https://img.shields.io/badge/license-MIT-lightgrey)
 # Distributed Device Fleet Monitor (Mini Netflix Open Connect)
 
 A tiny Spring Boot service that **simulates a fleet of CDN edge appliances**. It exposes:
@@ -6,6 +11,13 @@ A tiny Spring Boot service that **simulates a fleet of CDN edge appliances**. It
 - A scheduler that randomly changes device status to mimic real-world drift
 
 This is a fast, public work sample designed to demonstrate **cloud-native service design, observability, and distributed fleet orchestration** — aligned with Netflix Open Connect’s themes.
+
+## Clone + Run
+```bash
+git clone https://github.com/<your-username>/netflix-openconnect-mini.git
+cd netflix-openconnect-mini
+mvn clean spring-boot:run
+```
 
 ## Quick Start
 ```bash
@@ -28,7 +40,7 @@ curl http://localhost:8080/actuator/prometheus
 
 > These map to `cdn.devices.*` gauges (Micrometer will convert dots to underscores for Prometheus).
 
-## Sample Prometheus config
+## Prometheus config
 Create `prometheus.yml`:
 ```yaml
 global:
@@ -56,23 +68,60 @@ ENTRYPOINT ["java","-jar","/app.jar"]
 flowchart LR
   subgraph Client
     CLI[CLI / Curl] -->|REST| API[/Spring Boot API/]
-    Grafana -->|PromQL| Prometheus
+    Grafana[Grafana UI] -->|PromQL Queries| Prometheus
   end
 
-  API --> Repo[(In-Memory Repo)]
-  Ticker((Scheduler)) --> API
-  API -->|Actuator| Prometheus
-```
+  subgraph Service
+    API[/Spring Boot API/] --> Repo[(In-Memory Repo)]
+    Ticker((Scheduler)) --> API
+    API -->|Micrometer Metrics| Prometheus
+  end
 
-## Endpoints
+  subgraph Monitoring
+    Prometheus[Prometheus Server] --> Grafana
+  end
+```
+What’s happening
+
+Ticker simulates fleet drift every 30s (device up/down, CPU, throughput).
+
+The API exposes device data and metrics.
+
+Prometheus scrapes /actuator/prometheus.
+
+Grafana visualizes PromQL queries for fleet health.
+
+
+## API Endpoints
 - `GET /api/devices` — list all devices
 - `GET /api/devices/{id}` — get a single device
 - `POST /api/devices` — upsert a device
 - `GET /actuator/prometheus` — metrics for Prometheus
+
+## Example Upsert
+```bash
+curl -X POST http://localhost:8080/api/devices \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id":"edge-21",
+    "region":"NA",
+    "isp":"ISP-X",
+    "online":true,
+    "cpu":32.5,
+    "throughputMbps":640.0
+  }'
+  ```
+
+Why this project exists
+This repo was created to showcase experience building cloud-native microservices, observability pipelines, and distributed fleet orchestration — the same kinds of problems tackled by Netflix’s Open Connect platform.
 
 ## Notes
 - In-memory store (simple & demo-friendly). Swap with a DB for persistence.
 - Scheduler randomizes CPU, throughput, and up/down state every 30s.
 - Add Grafana dashboard panels for the listed metrics.
 ```
+
+
+
+
 
